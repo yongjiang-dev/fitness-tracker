@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="减脂记录">
+  <rect width="512" height="512" rx="112" fill="#0e7c66"/>
+  <path d="M112 168 L196 244 L280 208 L400 372" fill="none" stroke="#eafaf5" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="400" cy="372" r="28" fill="#f0c98a"/>
+</svg>

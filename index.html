@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>减脂记录</title>
+  <meta name="description" content="记录每天的体重、三围、三餐和运动，数据只存在本机。" />
+  <meta name="theme-color" content="#0e7c66" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#12161a" media="(prefers-color-scheme: dark)" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar__title">
+        <span class="dot"></span>
+        <span>减脂记录</span>
+      </div>
+      <div class="topbar__meta" id="topbar-meta"></div>
+    </header>
+
+    <main class="views" id="views">
+
+      <!-- ============ 今天 ============ -->
+      <section class="view is-active" id="view-today" data-view="today">
+        <div class="daybar">
+          <button class="icon-btn" id="day-prev" type="button" aria-label="前一天">&#8249;</button>
+          <button class="daybar__label" id="day-label" type="button">
+            <span id="day-label-main"></span>
+            <span class="daybar__sub" id="day-label-sub"></span>
+          </button>
+          <button class="icon-btn" id="day-next" type="button" aria-label="后一天">&#8250;</button>
+        </div>
+        <div class="chips" id="day-chips">
+          <button class="chip" type="button" data-jump="0">今天</button>
+          <button class="chip" type="button" data-jump="-1">昨天</button>
+          <button class="chip" type="button" data-jump="-2">前天</button>
+          <button class="chip" type="button" data-pick>选日期</button>
+        </div>
+        <input type="date" id="day-picker" class="hidden-input" aria-label="选择日期" />
+
+        <section class="card" id="card-weight">
+          <div class="card__head">
+            <h2>体重</h2>
+            <span class="card__hint">kg · 一位小数</span>
+          </div>
+          <div class="weights">
+            <label class="field">
+              <span class="field__label">早</span>
+              <input class="num" id="w-morning" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="--" />
+            </label>
+            <label class="field">
+              <span class="field__label">中</span>
+              <input class="num" id="w-noon" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="--" />
+            </label>
+            <label class="field">
+              <span class="field__label">晚</span>
+              <input class="num" id="w-evening" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="--" />
+            </label>
+          </div>
+          <p class="note" id="weight-note"></p>
+        </section>
+
+        <section class="card" id="card-measure">
+          <button class="card__head card__head--btn" id="measure-toggle" type="button" aria-expanded="false">
+            <h2>三围 <span class="tag tag--warn" id="measure-flag" hidden>本周未测</span></h2>
+            <span class="chev" aria-hidden="true">&#8250;</span>
+          </button>
+          <div class="collapsible" id="measure-body" hidden>
+            <div class="weights">
+              <label class="field">
+                <span class="field__label">胸围</span>
+                <input class="num" id="m-bust" type="number" inputmode="decimal" step="0.1" min="40" max="200" placeholder="--" />
+              </label>
+              <label class="field">
+                <span class="field__label">腰围</span>
+                <input class="num" id="m-waist" type="number" inputmode="decimal" step="0.1" min="40" max="200" placeholder="--" />
+              </label>
+              <label class="field">
+                <span class="field__label">臀围</span>
+                <input class="num" id="m-hip" type="number" inputmode="decimal" step="0.1" min="40" max="200" placeholder="--" />
+              </label>
+            </div>
+            <p class="note">单位 cm。围度变化慢，每周固定一天量一次就够。</p>
+          </div>
+        </section>
+
+        <div id="meals"></div>
+
+        <section class="card" id="card-exercise">
+          <div class="card__head">
+            <h2>运动</h2>
+            <button class="btn btn--ghost btn--sm" id="add-exercise" type="button">+ 添加</button>
+          </div>
+          <div id="exercise-list"></div>
+          <p class="note" id="exercise-source" hidden></p>
+          <p class="note" id="exercise-empty" hidden>今天还没有运动记录。</p>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>当天备注</h2></div>
+          <textarea id="day-note" rows="3" placeholder="身体感受、生理期、生病、应酬……"></textarea>
+        </section>
+      </section>
+
+      <!-- ============ 趋势 ============ -->
+      <section class="view" id="view-trend" data-view="trend">
+        <div class="segmented" id="range-seg" role="group" aria-label="时间范围">
+          <button type="button" data-range="7">7 天</button>
+          <button type="button" data-range="30" class="is-on">30 天</button>
+          <button type="button" data-range="90">90 天</button>
+          <button type="button" data-range="all">全部</button>
+        </div>
+
+        <section class="card">
+          <div class="card__head">
+            <h2>体重趋势</h2>
+            <div class="segmented segmented--sm" id="metric-seg" role="group" aria-label="体重口径">
+              <button type="button" data-metric="morning" class="is-on">晨重</button>
+              <button type="button" data-metric="noon">午间</button>
+              <button type="button" data-metric="evening">晚间</button>
+              <button type="button" data-metric="avg">日均</button>
+            </div>
+          </div>
+          <div class="chart" id="weight-chart"></div>
+          <div class="legend" id="weight-legend"></div>
+        </section>
+
+        <section class="card">
+          <div class="grid grid--4" id="stats"></div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>三围趋势</h2></div>
+          <div class="chart" id="measure-chart"></div>
+          <div class="legend" id="measure-legend"></div>
+        </section>
+      </section>
+
+      <!-- ============ 目标 ============ -->
+      <section class="view" id="view-goal" data-view="goal">
+        <section class="card">
+          <div class="card__head"><h2>目标设置</h2></div>
+          <div class="form-grid">
+            <label class="field field--wide">
+              <span class="field__label">身高（cm）</span>
+              <input class="num num--wide" id="g-height" type="number" inputmode="decimal" step="0.5" placeholder="165" />
+            </label>
+            <label class="field field--wide">
+              <span class="field__label">起始体重（kg）</span>
+              <input class="num num--wide" id="g-start" type="number" inputmode="decimal" step="0.1" placeholder="留空则用第一条记录" />
+            </label>
+            <label class="field field--wide">
+              <span class="field__label">目标体重（kg）</span>
+              <input class="num num--wide" id="g-target" type="number" inputmode="decimal" step="0.1" placeholder="55" />
+            </label>
+            <label class="field field--wide">
+              <span class="field__label">目标日期</span>
+              <input class="num num--wide" id="g-date" type="date" />
+            </label>
+            <label class="field field--wide">
+              <span class="field__label">每周测量日</span>
+              <select id="g-weekday">
+                <option value="1">周一</option>
+                <option value="2">周二</option>
+                <option value="3">周三</option>
+                <option value="4">周四</option>
+                <option value="5">周五</option>
+                <option value="6">周六</option>
+                <option value="0">周日</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>进度</h2></div>
+          <div id="goal-progress"></div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>BMI</h2></div>
+          <div id="goal-bmi"></div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>预测</h2></div>
+          <div id="goal-forecast"></div>
+        </section>
+      </section>
+
+      <!-- ============ 数据 ============ -->
+      <section class="view" id="view-data" data-view="data">
+        <section class="card">
+          <div class="card__head"><h2>存储</h2></div>
+          <div id="storage-info"></div>
+          <p class="note">数据只保存在这台设备的浏览器里，不会上传到任何服务器。</p>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>备份</h2></div>
+          <div class="stack">
+            <button class="btn" id="export-json" type="button">导出轻量备份（.json）</button>
+            <p class="note">只含体重、三围、三餐文字与标签、运动记录。文件很小，适合每周备份。</p>
+            <button class="btn" id="export-zip" type="button">导出完整备份（.zip，含照片）</button>
+            <p class="note">包含全部照片，体积较大，适合换手机时使用。</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>恢复</h2></div>
+          <div class="stack">
+            <label class="field field--wide">
+              <span class="field__label">选择备份文件（.json 或 .zip）</span>
+              <input id="import-file" type="file" accept=".json,.zip,application/json,application/zip" />
+            </label>
+            <div class="segmented segmented--sm" id="import-mode" role="group" aria-label="导入方式">
+              <button type="button" data-mode="merge" class="is-on">按日期合并</button>
+              <button type="button" data-mode="replace">覆盖全部</button>
+            </div>
+            <button class="btn btn--primary" id="import-run" type="button">开始导入</button>
+            <p class="note" id="import-hint">合并时同一天以导入文件为准，照片按编号去重。</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>提醒</h2></div>
+          <div class="stack">
+            <button class="btn" id="export-ics" type="button">生成三围周提醒（.ics）</button>
+            <p class="note">下载后用手机自带日历打开，之后每周由系统提醒，不依赖网络。</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>外观</h2></div>
+          <div class="segmented" id="theme-seg" role="group" aria-label="主题">
+            <button type="button" data-theme="auto" class="is-on">跟随系统</button>
+            <button type="button" data-theme="light">浅色</button>
+            <button type="button" data-theme="dark">深色</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><h2>安装到手机</h2></div>
+          <div class="stack">
+            <button class="btn" id="install-btn" type="button" hidden>添加到主屏幕</button>
+            <p class="note" id="install-hint">用 Chrome 打开本页，点右上角菜单，选"添加到主屏幕"，就能像 App 一样从桌面启动。</p>
+          </div>
+        </section>
+
+        <section class="card card--danger">
+          <div class="card__head"><h2>危险操作</h2></div>
+          <button class="btn btn--danger" id="wipe" type="button">清空本机全部数据</button>
+          <p class="note">不可撤销，请先导出备份。</p>
+        </section>
+
+        <p class="footer-note">减脂记录 · 本地版 <span id="app-version"></span></p>
+      </section>
+
+    </main>
+
+    <nav class="tabbar" id="tabbar">
+      <button type="button" class="tab is-on" data-tab="today"><span class="tab__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.6"/><path d="M3 9.6h18M8 2.6v4M16 2.6v4"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/></svg></span><span>今天</span></button>
+      <button type="button" class="tab" data-tab="trend"><span class="tab__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M4.6 15.6l5-5 3.5 3.5 6.4-7"/></svg></span><span>趋势</span></button>
+      <button type="button" class="tab" data-tab="goal"><span class="tab__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3.4"/></svg></span><span>目标</span></button>
+      <button type="button" class="tab" data-tab="data"><span class="tab__ico"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.6" rx="7.4" ry="2.8"/><path d="M4.6 5.6v12.8c0 1.55 3.3 2.8 7.4 2.8s7.4-1.25 7.4-2.8V5.6"/><path d="M4.6 12c0 1.55 3.3 2.8 7.4 2.8s7.4-1.25 7.4-2.8"/></svg></span><span>数据</span></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lightbox__close" id="lightbox-close" type="button" aria-label="关闭">&times;</button>
+    <img id="lightbox-img" alt="" />
+    <button class="btn btn--danger btn--sm" id="lightbox-delete" type="button">删除这张照片</button>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
